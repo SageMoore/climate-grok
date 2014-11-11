@@ -1,0 +1,54 @@
+import sbt._
+import sbt.Keys._
+
+object Build extends Build {
+
+ override lazy val settings =
+    super.settings ++ Seq(shellPrompt := { s => Project.extract(s).currentProject.id + " > " })
+
+  lazy val service = Project(
+    id = "climate-service",
+    base = file("."),
+    settings = Project.defaultSettings ++ Seq(
+      name := "climate-service",
+      organization := "com.azavea",
+      version := "0.1-SNAPSHOT",
+      scalaVersion := "2.10.4",
+      scalacOptions ++= Seq(
+        "-deprecation",
+        "-unchecked",
+        "-Yinline-warnings",
+        "-language:implicitConversions",
+        "-language:reflectiveCalls",
+        "-language:postfixOps",
+        "-language:existentials",
+        "-feature"),
+      libraryDependencies ++= {
+        val akkaV = "2.2.4"
+        val sprayV = "1.2.0"
+        val geotrellisV = "0.10.0-SNAPSHOT"
+        Seq(
+          "io.spray"            %   "spray-can"     % sprayV,
+          "io.spray"            %   "spray-routing" % sprayV,
+          "io.spray"            %   "spray-caching" % sprayV,
+          "io.spray"            %   "spray-testkit" % sprayV  % "test",
+          "io.spray"            %%  "spray-json"    % "1.2.6",
+          "com.typesafe.akka"   %%  "akka-actor"    % akkaV,
+          "com.typesafe.akka"   %%  "akka-testkit"  % akkaV   % "test",
+
+          "org.slf4j"                 %   "slf4j-log4j12"   % "1.7.7",
+          "org.clapper"               %%  "grizzled-slf4j"  % "1.0.2",
+          "org.apache.logging.log4j"  %   "log4j"           % "2.0-rc2",
+
+          "com.azavea.geotrellis" %% "geotrellis-spark"   % geotrellisV,
+          "com.azavea.geotrellis" %% "geotrellis-raster"  % geotrellisV,
+          "com.azavea.geotrellis" %% "geotrellis-vector"  % geotrellisV,
+          "com.azavea.geotrellis" %% "geotrellis-proj4"   % geotrellisV,
+
+          "com.github.nscala-time" %% "nscala-time" % "0.8.0",          
+          "org.scalatest" % "scalatest_2.10" % "2.1.0" % "test"
+        )
+      }
+    )
+  )
+}
