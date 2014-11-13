@@ -88,8 +88,7 @@ object CatalogService extends ArgApp[TmsArgs] with SimpleRoutingApp with SprayJs
         complete {
           import DefaultJsonProtocol._
           accumulo.metaDataCatalog.fetchAll.mapValues(_._1).toSeq.map {
-            case (layer, lmd) =>
-              val md = lmd.rasterMetaData
+            case (layer, md) =>              
               val center = md.extent.reproject(md.crs, LatLng).center
               var bands = {
                 val GridBounds(col, row, _, _) = md.mapTransform(md.extent)
