@@ -1,4 +1,5 @@
-package cliamte
+package climate
+
 import geotrellis.spark._
 import geotrellis.spark.ingest.NetCDFIngestCommand._
 import geotrellis.spark.tiling._
@@ -11,7 +12,7 @@ import org.apache.spark._
 import com.quantifind.sumac.ArgMain
 import geotrellis.spark.cmd.args._
 
-package object op {
+package object cmd {
     implicit val tiler: Tiler[NetCdfBand, SpaceTimeKey] = {
       val getExtent = (inKey: NetCdfBand) => inKey.extent
       val createKey = (inKey: NetCdfBand, spatialComponent: SpatialKey) =>

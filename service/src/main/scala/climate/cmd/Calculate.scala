@@ -9,6 +9,7 @@ import geotrellis.spark.cmd.args._
 import geotrellis.spark.io.hadoop._
 import org.apache.hadoop.fs.Path
 import org.apache.spark._
+import climate.utils.Utils
 
 class CalcArgs extends SparkArgs with AccumuloArgs
 
@@ -20,6 +21,8 @@ object Calculate extends ArgMain[CalcArgs] with Logging {
     System.setProperty("com.sun.media.jai.disableMediaLib", "true")
 
     implicit val sparkContext = args.sparkContext("Ingest")
+    Utils.addClimateJar(sparkContext)
+
     //val accumulo = AccumuloInstance(args.instance, args.zookeeper, args.user, new PasswordToken(args.password))
     //val catalog = accumulo.catalog
     
