@@ -6,11 +6,9 @@
 
 var React = require('react');
 var Table = require("react-bootstrap/Table");
-var Bands = require('./Bands.jsx');
+var CatalogLayer = require('./CatalogLayer.jsx');
 var _     = require("underscore");
               
-
-
 
 var Catalog = React.createClass({
   handleSelectLayer: function(entry) {
@@ -25,20 +23,17 @@ var Catalog = React.createClass({
   render: function () {
     var self = this;
  
-    var layerList = _.map(this.props.catalog, function(entry) {  
-      console.log(entry);  
-      return (        
-        <tr>
-          <td><a onClick={_.partial(self.handleSelectLayer, entry)}>{ entry.layer.name }</a></td>
-          <td>{entry.layer.zoom}</td>
-          <td><Bands entry={entry} url={self.props.url} active={self.props.active} /></td>
-        </tr>);
+    var layerGroups = _.groupBy(this.props.catalog, function(r) {return r.layer.name});
+
+    var layerList = _.map(_.keys(layerGroups), function(layerName) {  
+      var entries = _.sortBy(layerGroups[layerName], function(e) { return e.layer.zoom });
+      return (<CatalogLayer url={self.props.url} active={self.props.active} layerName={layerName} entries={entries} />);
     });
 
     return (
     <Table responsive>
       <thead>
-        <tr> <th>Layer</th> <th>Zoom</th><th>Band</th></tr>
+        <tr> <th>Layer</th> <th>Zoom</th><th>Band</th></tr>        
       </thead>
       <tbody> {layerList} </tbody>
     </Table>);

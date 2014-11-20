@@ -48,11 +48,12 @@ var LeafletMap = React.createClass({
     this.map.setView([51.505, -0.09], 13);      
   },
 
-  render: function() {  
+  render: function() {      
     var active = this.props.active; 
     var entry = this.props.active.entry;
+
     if (this.isMounted() && active.entry) {      
-      this.map.setView(entry.center.reverse(), entry.layer.zoom);
+      this.map.setView([entry.center[1], entry.center[0]], entry.layer.zoom);
       
       var removeLayer = function (map, oldLayer){
         if (oldLayer) { 
@@ -64,10 +65,10 @@ var LeafletMap = React.createClass({
       }
       
       var oldLayer = this.layer;    
-      var args = active.band;
-      console.log("DRAWING", active.entry);
+      var args = active.band;      
       args['breaks'] = active.entry.breaks.join(',');      
       var url = this.props.tmsUrl + "/" + active.entry.layer.name  + "/{z}/{x}/{y}?" + $.param( args );
+      console.log("TMS", url);
       var newLayer = L.tileLayer(url, {minZoom: 1, maxZoom: 12, tileSize: 256, tms: false});
       newLayer.addTo(this.map);
       this.map.lc.addOverlay(newLayer, entry.layer.name);

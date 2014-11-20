@@ -43,7 +43,7 @@ var RasterViewer = React.createClass({
   render: function() { 
     var self = this;
     var cursor = Cursor.build(this);
-    console.log('ACTIVE', this.state.active.entry, this.state.active.band);
+    console.log('Active Layer', this.state.active.entry, this.state.active.band);
     
     return (
       <div className="row">
