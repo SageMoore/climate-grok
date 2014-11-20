@@ -60,7 +60,7 @@ var RasterViewer = React.createClass({
             labelClassName="label-class" 
             onChange={self.handleChangeCatalogUrl} />
         
-          <Catalog catalog={this.state.catalog} active={cursor.refine('active')} />          
+          <Catalog catalog={this.state.catalog} url={this.state.url} active={cursor.refine('active')} />          
         </div>
       </div>
     )}
