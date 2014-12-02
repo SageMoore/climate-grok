@@ -1,0 +1,94 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Climate Change</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="apple-touch-icon" href="apple-touch-icon.png">
+        <!-- Place favicon.ico in the root directory -->
+
+        <style>
+
+            body {
+              font: 10px sans-serif;
+            }
+
+            .axis path,
+            .axis line {
+              fill: none;
+              stroke: #000;
+              shape-rendering: crispEdges;
+            }
+
+            .x.axis path {
+              display: none;
+            }
+
+            .line {
+              fill: none;
+              stroke: steelblue;
+              stroke-width: 1.5px;
+            }
+
+            .area {
+              opacity: 0;
+              stroke: none !important;
+              transition: all .4s;
+            }
+
+            .voronoi path {
+              fill: none;
+              pointer-events: all;
+              stroke: red;
+              stroke-opacity: .1;
+            }
+
+            .in .line:not(.hover) {
+              stroke: #ccc !important;
+            }
+
+            .area.hover {
+              opacity: .1;
+            }
+
+        </style>
+    </head>
+    <body>
+
+      <div id="option">
+        <input name="updateButton"
+               type="button"
+               value="State 1"
+               onclick="updateGraphOne('tempb.json')" />
+        <input name="updateButton"
+               type="button"
+               value="State 2"
+               onclick="updateGraphOne('tempb2.json')" />
+        <input name="updateButton"
+               type="button"
+               value="State 1"
+               onclick="updateGraphTwo('temp.json')" />
+        <input name="updateButton"
+               type="button"
+               value="State 2"
+               onclick="updateGraphTwo('temp2.json')" />
+      </div>
+
+      <div class="link1">
+      </div>
+
+      <div class="link2">
+      </div>
+
+      <div class="link3">
+      </div>
+
+      <div class="link4">
+      </div>
+
+      <script src="assets/main.js"></script>
+    </body>
+</html>
