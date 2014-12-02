@@ -41,7 +41,7 @@ object Build extends Build {
           "org.clapper"               %%  "grizzled-slf4j"  % "1.0.2",
           "org.apache.logging.log4j"  %   "log4j"           % "2.0-rc2",
 
-          "com.azavea.geotrellis" %% "geotrellis-spark"   % geotrellisV,
+          "com.azavea.geotrellis" %% "geotrellis-spark"   % geotrellisV, 
           "com.azavea.geotrellis" %% "geotrellis-raster"  % geotrellisV,
           "com.azavea.geotrellis" %% "geotrellis-vector"  % geotrellisV,
           "com.azavea.geotrellis" %% "geotrellis-proj4"   % geotrellisV,
