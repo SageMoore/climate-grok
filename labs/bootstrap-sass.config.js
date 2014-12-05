@@ -1,5 +1,5 @@
 module.exports = {
-  bootstrapCustomizations: "./bootstrap-sass.config.scss",
+  bootstrapCustomizations: "src/styles/partials/_variabls.scss",
   mainSass: "src/styles/main.scss",
   styleLoader: "style-loader!css-loader!sass-loader", // see example for the ExtractTextPlugin
   scripts: {

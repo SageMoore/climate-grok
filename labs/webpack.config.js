@@ -16,8 +16,8 @@ module.exports = {
   devtool: "inline-source-map",
   
   entry: [
-    './src/scripts/<%= pkg.mainInput %>.jsx'
-    'webpack/hot/only-dev-server',
+    './src/scripts/<%= pkg.mainInput %>.jsx',
+    'webpack/hot/only-dev-server'
   ],  
   
   output: {
