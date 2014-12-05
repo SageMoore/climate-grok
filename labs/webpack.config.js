@@ -16,6 +16,7 @@ module.exports = {
   devtool: "inline-source-map",
   
   entry: [
+    'bootstrap-sass!./bootstrap-sass.config.js',
     './src/scripts/<%= pkg.mainInput %>.jsx',
     'webpack/hot/only-dev-server'
   ],  
@@ -47,10 +48,6 @@ module.exports = {
       { test: /bootstrap-sass\/assets\/javascripts\//, loader: 'imports?jQuery=jquery' },
       { test: /\.scss$/, loader: "style!css!sass?outputStyle=expanded" },
 
-      // ToDo: custom path and source map option did not work
-      //{ test: /\.scss$/,
-      //  loader: "style!css!sass?outputStyle=expanded&sourceMap=true&includePaths[]=" + bootstrapPathStylesheets },
-
       // Needed for the css-loader when [bootstrap-sass-loader](https://github.com/justin808/bootstrap-sass-loader)
       // loads bootstrap's css.
       { test: /\.woff(\?v=\d+\.\d+\.\d+)?$/,   loader: "url?limit=10000&minetype=application/font-woff" },
@@ -66,8 +63,7 @@ module.exports = {
 
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.NoErrorsPlugin(),
-    new ExtractTextPlugin("bootstrap-and-customizations.css")
+    new webpack.NoErrorsPlugin()    
   ]
 
 };
