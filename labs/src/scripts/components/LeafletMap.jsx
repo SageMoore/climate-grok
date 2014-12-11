@@ -19,12 +19,12 @@ require('leaflet-draw/src/draw/handler/Draw.Rectangle.js')
 
 var Layers = {
   stamen: { 
+    osm:        'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     toner:      'http://{s}.tile.stamen.com/toner/{z}/{x}/{y}.png',   
     watercolor: 'http://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.png',
     attrib:     'Map data &copy;2013 OpenStreetMap contributors, Tiles &copy;2013 Stamen Design'
   },
   mapBox: {
-    azavea:     'http://{s}.tiles.mapbox.com/v3/azavea.map-zbompf85/{z}/{x}/{y}.png',
     worldBlank: 'http://{s}.tiles.mapbox.com/v3/mapbox.world-blank-light/{z}/{x}/{y}.png',
     attrib:     'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery &copy; <a href="http://mapbox.com">MapBox</a>'
   }
@@ -35,13 +35,17 @@ var getLayer = function(url,attrib) {
 };
 
 var baseLayers = {
-
-  "Azavea" :      getLayer(Layers.mapBox.azavea,Layers.mapBox.attrib),
+  "OSM":          getLayer(Layers.stamen.osm,Layers.stamen.attrib),
   "Watercolor" :  getLayer(Layers.stamen.watercolor,Layers.stamen.attrib),
   "Toner" :       getLayer(Layers.stamen.toner,Layers.stamen.attrib),
   "Blank" :       getLayer(Layers.mapBox.worldBlank,Layers.mapBox.attrib)
 };
 
+var index = 0;
+var getName = function() {
+  index = index + 1;
+  return "feature-" + index;
+}
 
 var LeafletMap = React.createClass({
   map: null, 
@@ -57,7 +61,7 @@ var LeafletMap = React.createClass({
     var self = this;
     var map = L.map(this.getDOMNode());
 
-    baseLayers['Azavea'].addTo(map);    
+    baseLayers['OSM'].addTo(map);    
     map.lc = L.control.layers(baseLayers).addTo(map);
     map.setView([51.505, -0.09], 2);
 
@@ -81,11 +85,23 @@ var LeafletMap = React.createClass({
     map.on('draw:created', function (e) {
       var type = e.layerType, 
           layer = e.layer;
-      drawnItems.clearLayers(); // can only have one polygon for now
-      drawnItems.addLayer(layer);
+      //drawnItems.clearLayers(); // can only have one polygon for now
+          
+      var feature = layer.toGeoJSON().valueOf();
+      feature.properties = {"name": getName()};
+      //var layer = L.geoJson(feature);
       
-      self.props.addPolygon(layer.toGeoJSON().valueOf().geometry);
+      drawnItems.addLayer(layer);
+      self.props.addPolygon(feature);
     }); 
+
+    // map.on('draw:edited', function (e) {
+    //     var layers = e.layers;
+    //     layers.eachLayer(function (layer) {
+    //       alert(layer);
+    //         //do whatever you want, most likely save back to db
+    //     });
+    // });
 
     this.map = map;    
   },

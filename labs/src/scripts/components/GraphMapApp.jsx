@@ -31,17 +31,29 @@ var GraphMapApp = React.createClass({
 
   addPolygon: function(poly) {
     var self = this;
-
+    
     getData(model, poly, function(err, data) {
-      // var updated = self.state.models.slice();
-      // updated.push(data[0]);
-      // console.log("UPDATED", updated)
-      self.setState({models: data})
+      var updated = self.state.models.slice();     // shallow copy;
+      data[0].model = poly.properties.name; //replace model name with feature name
+      updated.push(data[0])
+      self.setState({models: updated})
     });
   },
 
   updatePolygon: function(poly) {
-    //do xhr request and update state
+    var self = this;
+    
+    alert("updating: " + poly.properties.name);
+    getData(model, poly, function(err, data) {
+      var updated = self.state.models.slice();     // shallow copy;
+      var name = poly.properties.name;
+
+      updated = _.reject(updated, function(model) { return model.name == name }); 
+      data[0].model = poly.properties.name; // replace model name with feature name
+      updated.push(data[0])
+      
+      self.setState({models: updated})
+    });
   },
 
   deletePolygon: function(polgy) {
@@ -53,11 +65,12 @@ var GraphMapApp = React.createClass({
     var cursor = Cursor.build(this);    
     return (    
       <div className="row">
-        <div className="col-md-9">          
+        <div className="col-md-5">          
          <LeafletMap tmsUrl="http:/localhost:8088/tms" 
-          addPolygon={self.addPolygon} /> 
+          addPolygon={self.addPolygon} 
+          updatePolygon={self.updatePolygon} /> 
         </div>
-        <div className="col-md-12">
+        <div className="col-md-7">
           <Graph data={this.state.models} />
         </div>
       </div>  

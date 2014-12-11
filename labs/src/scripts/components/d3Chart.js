@@ -10,7 +10,7 @@ d3Chart.create = function (el, dataSet) {
     var parseDate = d3.time.format.iso.parse;
 
     var margin = { top: 20, right: 80, bottom: 30, left: 50 },
-        width = 960 - margin.left - margin.right,
+        width = 800 - margin.left - margin.right,
         height = 500 - margin.top - margin.bottom;
 
     var svg = d3.select(el)
@@ -30,8 +30,6 @@ d3Chart.create = function (el, dataSet) {
     var yAxis = d3.svg.axis()
         .scale(y)        
         .orient("left");
-        
-
 
     var line = d3.svg.line()
         .interpolate("linear")
@@ -44,10 +42,8 @@ d3Chart.create = function (el, dataSet) {
         .y0(function(d) { return y(d.min); })
         .y1(function(d) { return y(d.max); });
 
-
     var color = d3.scale.category10();
-    color.domain(_.pluck(dataSet, 'model'));
-    
+    color.domain(_.pluck(dataSet, 'model'));          
 
     svg.append("g")
         .attr("class", "x axis")
@@ -62,55 +58,49 @@ d3Chart.create = function (el, dataSet) {
         .attr("y", 6)
         .attr("dy", ".71em")
         .style("text-anchor", "end")
-        .text("Temperature (ºC)");
-
-    svg.selectAll("path.line")
-        .data(dataSet, function(d) {return d.model})
-        .transition().duration(500).ease('sin-in-out')
-        .attr("class", function(d) { return "line city city-" + d.model; })        
-        .attr("d", function(d) { return line(d.data); })
-        .style("stroke", function(d) { return color(d.model); });
-
-    return {
-    update: function (data) {            
+        .text("Temperature (ºC)");        
+    
+    var update = function (data) {  
+        
         x.domain([
             d3.min(data, function (model) { return d3.min(model.data, function(d) { return parseDate(d.time) }) }),            
             d3.max(data, function (model) { return d3.max(model.data, function(d) { return parseDate(d.time) }) })            
         ])
         y.domain([
-            d3.min(data, function (model) { return d3.min( _.pluck(model.data, 'mean') ) }) * 0.9,
-            d3.max(data, function (model) { return d3.max( _.pluck(model.data, 'mean') ) }) * 1.1
+            d3.min(data, function (model) { return d3.min( _.pluck(model.data, 'mean') ) }),
+            d3.max(data, function (model) { return d3.max( _.pluck(model.data, 'mean') ) })
         ]);
-
-        // var yAxis = d3.svg.axis()
-        //     .scale(y)
-        //     .orient("left");
 
         yAxis.scale(y);
         xAxis.scale(x);
 
         svg.select(".y.axis")
-            .transition().duration(1500)
+            .transition()
             .call(yAxis)
 
         svg.select(".x.axis")
-            .transition().duration(1500)
+            .transition()
             .call(xAxis)
 
-
         var binding = svg.selectAll("path.line")
-            .data(data, function(d) {return d.model})        
-            .attr("d", function(d) { return line(d.data); })
-        
+            .data(data)   
 
-        binding.enter()            
-            .append("path")       
+        binding    
+            .transition()
+            .attr("d", function(d) { return line(d.data); }) 
+                    
+        binding.enter() 
+            .append("path")             
             .attr("class", function(d) { return "line city city-" + d.model; })                    
             .attr("d", function(d) { return line(d.data); })
             .style("stroke", function(d) { return color(d.model); })            
+    }
 
+    update(dataSet)
 
-    } }
+    return {
+        update: update
+    }
 }
 
 module.exports = d3Chart;
