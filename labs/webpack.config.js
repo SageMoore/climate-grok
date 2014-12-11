@@ -11,7 +11,7 @@ var path = require('path');
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 module.exports = {
-  cache: true,
+  cache: false,
   debug: true,
   devtool: "inline-source-map",
   

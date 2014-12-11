@@ -9,3 +9,39 @@
 @import "partials/_header";
 
 @import "_globals";
+
+#map {
+  width: 100%;
+  height: 600px; 
+}
+
+//Graph stuff
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.area {
+  opacity: 0.0;
+  stroke: none !important;
+  transition: all .4s;
+}
+
+.voronoi path {
+  fill: none;
+  pointer-events: all;
+  /*stroke: red;*/
+  /*stroke-opacity: .1;*/
+}
