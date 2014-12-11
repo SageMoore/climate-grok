@@ -20,10 +20,12 @@ require('leaflet-draw/src/draw/handler/Draw.Rectangle.js')
 
 var Layers = {
   stamen: { 
+    landscape:  'http://{s}.tile.thunderforest.com/landscape/{z}/{x}/{y}.png', 
     osm:        'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     toner:      'http://{s}.tile.stamen.com/toner/{z}/{x}/{y}.png',   
     watercolor: 'http://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.png',
-    attrib:     'Map data &copy;2013 OpenStreetMap contributors, Tiles &copy;2013 Stamen Design'
+    attrib:     'Map data &copy;2013 OpenStreetMap contributors, Tiles &copy;2013 Stamen Design',
+    land_attrib: '<a href="http://www.opencyclemap.org">OpenCycleMap</a>, &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   },
   mapBox: {
     worldBlank: 'http://{s}.tiles.mapbox.com/v3/mapbox.world-blank-light/{z}/{x}/{y}.png',
@@ -36,6 +38,7 @@ var getLayer = function(url,attrib) {
 };
 
 var baseLayers = {
+  "Landscape":    getLayer(Layers.stamen.landscape, Layers.stamen.land_attrib),
   "OSM":          getLayer(Layers.stamen.osm,Layers.stamen.attrib),
   "Watercolor" :  getLayer(Layers.stamen.watercolor,Layers.stamen.attrib),
   "Toner" :       getLayer(Layers.stamen.toner,Layers.stamen.attrib),
@@ -71,7 +74,7 @@ var LeafletMap = React.createClass({
     var self = this;
     var map = L.map(this.getDOMNode());
 
-    baseLayers['OSM'].addTo(map);    
+    baseLayers['Landscape'].addTo(map);    
     map.lc = L.control.layers(baseLayers).addTo(map);
     map.setView([51.505, -0.09], 2);
 
