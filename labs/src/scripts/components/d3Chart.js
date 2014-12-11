@@ -4,8 +4,6 @@ var d3 = require('d3');
 var _ = require('underscore');
 var d3Chart = {};
    
-
-
 d3Chart.create = function (el, dataSet) {    
     var parseDate = d3.time.format.iso.parse;
 

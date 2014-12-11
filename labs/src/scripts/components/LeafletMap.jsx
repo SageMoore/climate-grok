@@ -6,6 +6,7 @@
 
 var React = require('react');
 var _     = require("underscore");
+var d3    = require('d3');
 
 var L = require('leaflet');
 var D = require('leaflet-draw');
@@ -44,8 +45,10 @@ var baseLayers = {
 var index = 0;
 var getName = function() {
   index = index + 1;
-  return "feature-" + index;
+  return index;
 }
+
+var color = d3.scale.category10();
 
 var layerToGeoJSON = function(layer) {
   var props = layer.properties;
@@ -93,8 +96,10 @@ var LeafletMap = React.createClass({
       var type = e.layerType, 
           layer = e.layer;
       //drawnItems.clearLayers(); // can only have one polygon for now
-      
-      layer.properties = {"name": getName()};    
+      var name = getName();
+      layer.properties = {"name": name};
+      console.log("DEBUG", layer);
+      layer.options.color = color(name);   
 
       drawnItems.addLayer(layer);
       self.props.addPolygon(layerToGeoJSON(layer));
