@@ -61,6 +61,7 @@ d3Chart.create = function (el, dataSet) {
         .text("Temperature (ºC)");        
     
     var update = function (data) {  
+        console.log("Update Graph", data)
         
         x.domain([
             d3.min(data, function (model) { return d3.min(model.data, function(d) { return parseDate(d.time) }) }),            
@@ -83,7 +84,7 @@ d3Chart.create = function (el, dataSet) {
             .call(xAxis)
 
         var binding = svg.selectAll("path.line")
-            .data(data)   
+            .data(data, function(d) {return d.model})   
 
         binding    
             .transition()
@@ -93,7 +94,9 @@ d3Chart.create = function (el, dataSet) {
             .append("path")             
             .attr("class", function(d) { return "line city city-" + d.model; })                    
             .attr("d", function(d) { return line(d.data); })
-            .style("stroke", function(d) { return color(d.model); })            
+            .style("stroke", function(d) { return color(d.model); })  
+
+        binding.exit().remove();          
     }
 
     update(dataSet)

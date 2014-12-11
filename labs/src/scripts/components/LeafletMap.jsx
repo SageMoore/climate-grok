@@ -47,6 +47,13 @@ var getName = function() {
   return "feature-" + index;
 }
 
+var layerToGeoJSON = function(layer) {
+  var props = layer.properties;
+  var feature = layer.toGeoJSON().valueOf();
+  feature.properties = props;
+  return feature;
+}
+
 var LeafletMap = React.createClass({
   map: null, 
   layer: null,
@@ -86,23 +93,28 @@ var LeafletMap = React.createClass({
       var type = e.layerType, 
           layer = e.layer;
       //drawnItems.clearLayers(); // can only have one polygon for now
-          
-      var feature = layer.toGeoJSON().valueOf();
-      feature.properties = {"name": getName()};
-      //var layer = L.geoJson(feature);
       
+      layer.properties = {"name": getName()};    
+
       drawnItems.addLayer(layer);
-      self.props.addPolygon(feature);
+      self.props.addPolygon(layerToGeoJSON(layer));
     }); 
 
-    // map.on('draw:edited', function (e) {
-    //     var layers = e.layers;
-    //     layers.eachLayer(function (layer) {
-    //       alert(layer);
-    //         //do whatever you want, most likely save back to db
-    //     });
-    // });
+    map.on('draw:edited', function (e) {
+        var layers = e.layers;
+        layers.eachLayer(function (layer) {                    
+          console.log("EDITED", layerToGeoJSON(layer));
+          self.props.updatePolygon(layerToGeoJSON(layer));
+        });
+    });
 
+    map.on('draw:deleted', function (e) {
+        var layers = e.layers;
+        layers.eachLayer(function (layer) {                    
+          console.log("DELETED", layerToGeoJSON(layer));
+          self.props.removePolygon(layerToGeoJSON(layer));
+        });
+    });
     this.map = map;    
   },
 

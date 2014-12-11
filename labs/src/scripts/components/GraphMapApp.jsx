@@ -10,6 +10,7 @@ var LeafletMap = require('./LeafletMap.jsx');
 var Graph = require('./Graph.jsx');
 var Cursor = require('react-cursor').Cursor;
 var d3 = require('d3');
+var _ = require('underscore')
 
 
 var model = "tas-miroc5-rcp45";
@@ -43,12 +44,11 @@ var GraphMapApp = React.createClass({
   updatePolygon: function(poly) {
     var self = this;
     
-    alert("updating: " + poly.properties.name);
     getData(model, poly, function(err, data) {
       var updated = self.state.models.slice();     // shallow copy;
       var name = poly.properties.name;
 
-      updated = _.reject(updated, function(model) { return model.name == name }); 
+      updated = _.reject(updated, function(d) { return d.model == name }); 
       data[0].model = poly.properties.name; // replace model name with feature name
       updated.push(data[0])
       
@@ -56,8 +56,10 @@ var GraphMapApp = React.createClass({
     });
   },
 
-  deletePolygon: function(polgy) {
-    //delete polygons from state
+  removePolygon: function(poly) {
+    var self = this;
+    var name = poly.properties.name;
+    self.setState({models: _.reject(self.state.models, function(d) { return d.model == name })})
   },
 
   render: function() {
@@ -68,7 +70,8 @@ var GraphMapApp = React.createClass({
         <div className="col-md-5">          
          <LeafletMap tmsUrl="http:/localhost:8088/tms" 
           addPolygon={self.addPolygon} 
-          updatePolygon={self.updatePolygon} /> 
+          updatePolygon={self.updatePolygon} 
+          removePolygon={self.removePolygon} /> 
         </div>
         <div className="col-md-7">
           <Graph data={this.state.models} />
