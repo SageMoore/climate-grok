@@ -46,6 +46,8 @@ object Build extends Build {
           "com.azavea.geotrellis" %% "geotrellis-vector"  % geotrellisV,
           "com.azavea.geotrellis" %% "geotrellis-proj4"   % geotrellisV,
 
+          "org.apache.spark" %% "spark-core" % "1.1.1" % "provided", 
+
           "com.github.nscala-time" %% "nscala-time" % "0.8.0",          
           "org.scalatest" % "scalatest_2.10" % "2.1.0" % "test"
         )
