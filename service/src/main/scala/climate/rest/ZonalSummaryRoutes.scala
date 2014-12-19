@@ -27,13 +27,13 @@ trait ZonalSummaryRoutes { self: HttpService with CorsSupport =>
       import org.apache.spark.SparkContext._        
       
       val layer = LayerId(name, zoom)      
-      val (lmd, params) = catalog.metaDataCatalog.load(layer).get
+      val (lmd, params) = catalog.metaDataCatalog.load(layer)
       val md = lmd.rasterMetaData  
       
       entity(as[Polygon]) { poly => 
         val polygon = poly.reproject(LatLng, md.crs)
         val bounds = md.mapTransform(polygon.envelope)
-        val tiles = catalog.load[SpaceTimeKey](layer, FilterSet(SpaceFilter[SpaceTimeKey](bounds))).get
+        val tiles = catalog.load[SpaceTimeKey](layer, FilterSet(SpaceFilter[SpaceTimeKey](bounds)))
       
         path("min") { 
           complete {    

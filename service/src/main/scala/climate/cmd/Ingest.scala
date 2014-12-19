@@ -35,7 +35,7 @@ object HDFSIngest extends ArgMain[HadoopIngestArgs] with Logging {
     if (args.pyramid) {
       Pyramid.saveLevels(rdd, level, layoutScheme)(save) // expose exceptions
     } else{
-      save(rdd, level).get
+      save(rdd, level)
     }
   }
 }

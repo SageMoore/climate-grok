@@ -59,13 +59,13 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
                     .withFilter(TimeFilter(dt, dt))
 
                   val rdd = catalog.load[SpaceTimeKey](LayerId(layer, zoom), filters)
-                  rdd.get.first().tile
+                  rdd.first().tile
                 case None =>
                   val filters = FilterSet[SpatialKey]() 
                     .withFilter(SpaceFilter(GridBounds(x, y, x, y)))
 
                   val rdd = catalog.load[SpatialKey](LayerId(layer, zoom), filters)
-                  rdd.get.first().tile
+                  rdd.first().tile
               }
 
               breaksOption match {
@@ -106,7 +106,7 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
     } ~ 
     pathPrefix(Segment / IntNumber) { (name, zoom) =>      
       val layer = LayerId(name, zoom)
-      val (lmd, params) = catalog.metaDataCatalog.load(layer).get
+      val (lmd, params) = catalog.metaDataCatalog.load(layer)
       val md = lmd.rasterMetaData
       (path("bands") & get) { 
         import DefaultJsonProtocol._
@@ -114,10 +114,10 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
           val bands = {
             val GridBounds(col, row, _, _) = md.mapTransform(md.extent)
             val filters = new FilterSet[SpaceTimeKey]() withFilter SpaceFilter(GridBounds(col, row, col, row))
-            catalog.load(layer, filters).map { // into Try
-              _.map { case (key, tile) => key.temporalKey.time.toString }
+            catalog.load(layer, filters).map {
+              case (key, tile) => key.temporalKey.time.toString
             }
-          }.get.collect
+          }.collect
           JsObject("time" -> bands.toJson)
         } }
       } ~ 
@@ -127,9 +127,9 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
           complete { future {                      
             
             (if (layer.name == "NLCD")
-              Histogram(catalog.load[SpatialKey](layer).get)
+              Histogram(catalog.load[SpatialKey](layer))
             else
-              Histogram(catalog.load[SpaceTimeKey](layer).get)
+              Histogram(catalog.load[SpaceTimeKey](layer))
             ).getQuantileBreaks(num.toInt)
           } }
         }
@@ -168,13 +168,13 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
       get {
         parameters('name, 'zoom.as[Int], 'x.as[Double], 'y.as[Double]) { (name, zoom, x, y) =>
           val layer = LayerId(name, zoom)
-          val (lmd, params) = catalog.metaDataCatalog.load(layer).get
+          val (lmd, params) = catalog.metaDataCatalog.load(layer)
           val md = lmd.rasterMetaData
           val crs = md.crs
 
           val p = Point(x, y).reproject(LatLng, crs)
           val key = md.mapTransform(p)
-          val rdd = catalog.load[SpaceTimeKey](layer, FilterSet(SpaceFilter[SpaceTimeKey](key.col, key.row))).get
+          val rdd = catalog.load[SpaceTimeKey](layer, FilterSet(SpaceFilter[SpaceTimeKey](key.col, key.row)))
           val bcMetaData = rdd.sparkContext.broadcast(rdd.metaData)
 
           def createCombiner(value: Double): (Double, Double) =

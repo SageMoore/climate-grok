@@ -30,11 +30,11 @@ object Calculate extends ArgMain[CalculateArgs] with Logging {
     // val catalog = accumulo.catalog
     val catalog: HadoopCatalog = HadoopCatalog(sparkContext, new Path("hdfs://localhost/catalog"))
 
-    val rdd = catalog.load[SpaceTimeKey](LayerId(args.inputLayer, 2)).get
+    val rdd = catalog.load[SpaceTimeKey](LayerId(args.inputLayer, 2))
     
     val ret = rdd
       .mapKeys { key => key.updateTemporalComponent(key.temporalKey.time.withMonthOfYear(1).withDayOfMonth(1).withHourOfDay(0)) }
       .averageByKey
-    catalog.save[SpaceTimeKey](LayerId(args.outputLayer,2), "results", ret, true).get
+    catalog.save[SpaceTimeKey](LayerId(args.outputLayer,2), "results", ret, true)
   }
 }

@@ -29,9 +29,9 @@ object AccumuloIngestCommand extends ArgMain[AccumuloIngestArgs] with Logging {
     }
 
     if (args.pyramid) {
-      Pyramid.saveLevels(rdd, level, layoutScheme)(save).get // expose exceptions
+      Pyramid.saveLevels(rdd, level, layoutScheme)(save)
     } else{
-      save(rdd, level).get
+      save(rdd, level)
     }
   }
 }
