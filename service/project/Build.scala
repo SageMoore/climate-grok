@@ -1,6 +1,8 @@
 import sbt._
 import sbt.Keys._
 import spray.revolver.RevolverPlugin._
+import sbtassembly.Plugin._
+import AssemblyKeys._
 
 object Build extends Build {
 
@@ -52,6 +54,6 @@ object Build extends Build {
           "org.scalatest" % "scalatest_2.10" % "2.1.0" % "test"
         )
       }
-    ) ++ Revolver.settings
+    ) ++ Revolver.settings ++ assemblySettings
   )
 }
