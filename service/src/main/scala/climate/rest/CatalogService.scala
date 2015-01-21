@@ -44,6 +44,8 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
   /** Simple route to test responsiveness of service. */
   val pingPong = path("ping")(complete("pong"))
 
+  val layoutScheme = ZoomedLayoutScheme()
+
   /** Server out TMS tiles for some layer */
   def tmsRoute =
     pathPrefix(Segment / IntNumber / IntNumber / IntNumber) { (layer, zoom, x, y) =>
@@ -51,22 +53,49 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
         respondWithMediaType(MediaTypes.`image/png`) {
           complete {
             future {
-              val tile = timeOption match {
-                case Some(time) =>
-                  val dt = DateTime.parse(time)
-                  val filters = FilterSet[SpaceTimeKey]()
-                    .withFilter(SpaceFilter(GridBounds(x, y, x, y)))
-                    .withFilter(TimeFilter(dt, dt))
+              val zooms = catalog.metaDataCatalog.zoomLevelsFor(layer)
 
-                  val rdd = catalog.load[SpaceTimeKey](LayerId(layer, zoom), filters)
-                  rdd.first().tile
-                case None =>
-                  val filters = FilterSet[SpatialKey]() 
-                    .withFilter(SpaceFilter(GridBounds(x, y, x, y)))
+              val tile = 
+                if(zooms.contains(zoom)) {
+                  val layerId = LayerId(layer, zoom)
 
-                  val rdd = catalog.load[SpatialKey](LayerId(layer, zoom), filters)
-                  rdd.first().tile
-              }
+                  timeOption match {
+                    case Some(timeStr) =>
+                      val time = DateTime.parse(timeStr)
+                      catalog.loadTile(layerId, SpaceTimeKey(x, y, time))
+                    case None =>
+                      catalog.loadTile(layerId, SpatialKey(x, y))
+                  }
+                } else {
+                  val z = zooms.max
+                  val layerId = LayerId(layer, z)
+
+                  val (meta, _) = catalog.metaDataCatalog.load(layerId)
+                  val rmd = meta.rasterMetaData
+
+                  val layoutLevel = layoutScheme.levelFor(zoom)
+                  val mapTransform = MapKeyTransform(rmd.crs, layoutLevel.tileLayout.layoutCols, layoutLevel.tileLayout.layoutRows)
+                  val targetExtent = mapTransform(x, y)
+                  val gb @ GridBounds(nx, ny, _, _) = rmd.mapTransform(targetExtent)
+                  val sourceExtent = rmd.mapTransform(nx, ny)
+                  println(s"SOURCE TILELAYOUT: ${rmd.tileLayout}")
+                  println(s"TARGET TILELAYOUT: ${layoutLevel.tileLayout}")
+                  println(s"GRIDBOUNDS: $gb")
+                  println(s"SOURCE EXTENT $sourceExtent")
+                  println(s"TARGET EXTENT $targetExtent")
+
+                  val largerTile =
+                    timeOption match {
+                      case Some(timeStr) =>
+                        val time = DateTime.parse(timeStr)
+                        catalog.loadTile(layerId, SpaceTimeKey(nx, ny, time))
+                      case None =>
+                        catalog.loadTile(layerId, SpatialKey(nx, ny))
+                    }
+
+                  largerTile.warp(sourceExtent, RasterExtent(targetExtent, 256, 256))
+                }
+
 
               breaksOption match {
                 case Some(breaks) =>
@@ -137,19 +166,6 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
     }
   }
 
-
-  // import scalaz._
-
-  // def getLayer = Memo.mutableHashMapMemo{ layer: LayerId =>
-  //   val rdd = catalog.load[SpaceTimeKey](layer).get
-  //   asRasterRDD(rdd.metaData) {
-  //     rdd.repartition(8).cache
-  //   }
-  // }
-
-
-
-  
   def timedCreate[T](startMsg:String,endMsg:String)(f:() => T):T = {
     println(startMsg)
     val s = System.currentTimeMillis

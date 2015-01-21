@@ -69,7 +69,7 @@ var LeafletMap = React.createClass({
       args['breaks'] = active.entry.breaks.join(',');      
       var url = this.props.tmsUrl + "/" + active.entry.layer.name  + "/{z}/{x}/{y}?" + $.param( args );
       console.log("TMS", url);
-      var newLayer = L.tileLayer(url, {minZoom: 1, maxZoom: 12, tileSize: 256, tms: false});
+      var newLayer = L.tileLayer(url, {minZoom: 1, maxZoom: 12, tileSize: 256, tms: false, opacity: 0.8});
       newLayer.addTo(this.map);
       this.map.lc.addOverlay(newLayer, entry.layer.name);
       this.layer = newLayer;
