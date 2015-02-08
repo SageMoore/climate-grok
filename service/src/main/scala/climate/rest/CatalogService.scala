@@ -96,7 +96,7 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Cor
                           catalog.loadTile(layerId, SpatialKey(nx, ny))
                       }
 
-                    largerTile.warp(sourceExtent, RasterExtent(targetExtent, 256, 256))
+                    largerTile.resample(sourceExtent, RasterExtent(targetExtent, 256, 256))
                   } else {
                     sys.error("NOPE!")
                   }
