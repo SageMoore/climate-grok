@@ -24,9 +24,12 @@ import com.github.nscala_time.time.Imports._
 
 case class SpaceTimeInputKey(extent: Extent, crs: CRS, time: DateTime)
 object SpaceTimeInputKey {
-  implicit def ingestKey: IngestKey[SpaceTimeInputKey] =
-    KeyLens[SpaceTimeInputKey, ProjectedExtent](band => ProjectedExtent(band.extent, band.crs), (band, pe) => SpaceTimeInputKey(pe.extent, pe.crs, band.time))
-
+  implicit object IngestKey extends KeyComponent[SpaceTimeInputKey, ProjectedExtent] {
+    def lens = createLens(
+      key => ProjectedExtent(key.extent, key.crs),
+      pe => key => SpaceTimeInputKey(pe.extent, pe.crs, key.time)
+    )
+  }
 }
 
 class SourceTileInputFormat extends FileInputFormat[SpaceTimeInputKey, Tile] {
@@ -47,14 +50,12 @@ class InputTileRecordReader extends RecordReader[SpaceTimeInputKey, Tile] {
     val conf = context.getConfiguration()
     val bytes = HdfsUtils.readBytes(path, conf)
 
-    val geoTiff = GeoTiffReader(bytes)
-
-    val imageDirectory = GeoTiffReader(bytes).read().imageDirectories.head
-    val meta = imageDirectory.metadata
+    val gt = GeoTiffReader.read(bytes)
+    val meta = gt.tags
     val isoString = meta("ISO_TIME")
     val dateTime = DateTime.parse(isoString)
-    val (tile, extent, crs) =
-      GeoTiffReader(bytes).read().imageDirectories.head.toRaster
+    val GeoTiffBand(tile, extent, crs, _) =
+      gt.bands.head
 
     tup = (SpaceTimeInputKey(extent, crs, dateTime), tile)
   }

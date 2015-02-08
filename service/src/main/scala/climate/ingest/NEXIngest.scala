@@ -38,8 +38,10 @@ object NEXIngest extends ArgMain[AccumuloIngestArgs] with Logging {
     val accumulo = AccumuloInstance(args.instance, args.zookeeper, args.user, new PasswordToken(args.password))
     val layoutScheme = ZoomedLayoutScheme()
 
+    def layerId(zoom: Int) = LayerId(args.layerName, zoom)
+
     val save = { (rdd: RasterRDD[SpaceTimeKey], level: LayoutLevel) =>
-      accumulo.catalog.save(LayerId(args.layerName, level.zoom), args.table, rdd, args.clobber)
+      accumulo.catalog.save(layerId(level.zoom), args.table, rdd, args.clobber)
     }
 
     // Get source tiles
