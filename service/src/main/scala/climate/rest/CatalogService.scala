@@ -10,9 +10,10 @@ import geotrellis.raster.io.geotiff.Nodata
 import geotrellis.raster.render._
 import geotrellis.spark._
 import geotrellis.spark.cmd.args._
+import geotrellis.spark.io._
 import geotrellis.spark.io.accumulo._
 import geotrellis.spark.io.hadoop._
-import geotrellis.spark.json._
+import geotrellis.spark.io.json._
 import geotrellis.spark.tiling._
 import geotrellis.spark.utils.SparkUtils
 import geotrellis.vector._
@@ -21,7 +22,7 @@ import org.apache.accumulo.core.client.security.tokens.PasswordToken
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
 import spray.http.{MediaTypes }
-import spray.httpx.SprayJsonSupport
+import spray.httpx.SprayJsonSupport._
 import spray.json._
 import spray.routing._
 
@@ -32,7 +33,7 @@ class CatalogArgs extends AccumuloArgs
  * Catalog and TMS service for TimeRaster layers only
  * This is intended to exercise the machinery more than being a serious service.
  */
-object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with SprayJsonSupport with CorsSupport with ZonalSummaryRoutes {
+object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with CorsSupport with ZonalSummaryRoutes {
   implicit val system = ActorSystem("spray-system")
   implicit val sparkContext = SparkUtils.createSparkContext("Catalog")
 
@@ -44,6 +45,8 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
   /** Simple route to test responsiveness of service. */
   val pingPong = path("ping")(complete("pong"))
 
+  val layoutScheme = ZoomedLayoutScheme()
+
   /** Server out TMS tiles for some layer */
   def tmsRoute =
     pathPrefix(Segment / IntNumber / IntNumber / IntNumber) { (layer, zoom, x, y) =>
@@ -51,26 +54,59 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
         respondWithMediaType(MediaTypes.`image/png`) {
           complete {
             future {
-              val tile = timeOption match {
-                case Some(time) =>
-                  val dt = DateTime.parse(time)
-                  val filters = FilterSet[SpaceTimeKey]()
-                    .withFilter(SpaceFilter(GridBounds(x, y, x, y)))
-                    .withFilter(TimeFilter(dt, dt))
+              val zooms = catalog.metaDataCatalog.zoomLevelsFor(layer)
 
-                  val rdd = catalog.load[SpaceTimeKey](LayerId(layer, zoom), filters)
-                  rdd.first().tile
-                case None =>
-                  val filters = FilterSet[SpatialKey]() 
-                    .withFilter(SpaceFilter(GridBounds(x, y, x, y)))
+              val tile = 
+                if(zooms.contains(zoom)) {
+                  val layerId = LayerId(layer, zoom)
 
-                  val rdd = catalog.load[SpatialKey](LayerId(layer, zoom), filters)
-                  rdd.first().tile
-              }
+                  timeOption match {
+                    case Some(timeStr) =>
+                      val time = DateTime.parse(timeStr)
+                      catalog.loadTile(layerId, SpaceTimeKey(x, y, time))
+                    case None =>
+                      catalog.loadTile(layerId, SpatialKey(x, y))
+                  }
+                } else {
+                  val z = zooms.max
+
+                  if(zoom > z) {
+                    val layerId = LayerId(layer, z)
+
+                    val (meta, _) = catalog.metaDataCatalog.load(layerId)
+                    val rmd = meta.rasterMetaData
+
+                    val layoutLevel = layoutScheme.levelFor(zoom)
+                    val mapTransform = MapKeyTransform(rmd.crs, layoutLevel.tileLayout.layoutCols, layoutLevel.tileLayout.layoutRows)
+                    val targetExtent = mapTransform(x, y)
+                    val gb @ GridBounds(nx, ny, _, _) = rmd.mapTransform(targetExtent)
+                    val sourceExtent = rmd.mapTransform(nx, ny)
+                    println(s"SOURCE TILELAYOUT: ${rmd.tileLayout}")
+                    println(s"TARGET TILELAYOUT: ${layoutLevel.tileLayout}")
+                    println(s"GRIDBOUNDS: $gb")
+                    println(s"SOURCE EXTENT $sourceExtent")
+                    println(s"TARGET EXTENT $targetExtent")
+
+                    val largerTile =
+                      timeOption match {
+                        case Some(timeStr) =>
+                          val time = DateTime.parse(timeStr)
+                          catalog.loadTile(layerId, SpaceTimeKey(nx, ny, time))
+                        case None =>
+                          catalog.loadTile(layerId, SpatialKey(nx, ny))
+                      }
+
+                    largerTile.resample(sourceExtent, RasterExtent(targetExtent, 256, 256))
+                  } else {
+                    sys.error("NOPE!")
+                  }
+                }
+
 
               breaksOption match {
                 case Some(breaks) =>
-                  tile.renderPng(ColorRamps.BlueToOrange, breaks.split(",").map(_.toInt)).bytes
+                  if(layer == "diff") tile.renderPng(ColorRamps.LightToDarkGreen, breaks.split(",").map(_.toInt)).bytes
+                  else tile.renderPng(ColorRamps.BlueToOrange, breaks.split(",").map(_.toInt)).bytes
                 case None =>
                   tile.renderPng.bytes  
               }              
@@ -87,8 +123,9 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
         complete {
           import DefaultJsonProtocol._
 
-          accumulo.metaDataCatalog.fetchAll.toSeq.map {
+          catalog.metaDataCatalog.fetchAll.toSeq.map {
             case (key, lmd) =>
+              println(s"Loading $key")
               val (layer, table) = key
               val md = lmd.rasterMetaData
               val center = md.extent.reproject(md.crs, LatLng).center
@@ -106,7 +143,22 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
     } ~ 
     pathPrefix(Segment / IntNumber) { (name, zoom) =>      
       val layer = LayerId(name, zoom)
-      val (lmd, params) = catalog.metaDataCatalog.load(layer)
+      val (lmd, params) = {
+        val catalogMetaData = catalog.metaDataCatalog.fetchAll
+        val candidates = 
+          catalogMetaData
+            .filterKeys( key => key._1 == layer)
+
+        candidates.size match {
+          case 0 =>
+            throw new LayerNotFoundError(layer)
+          case 1 =>
+            val (key, value) = candidates.toList.head
+            (value, key._2)
+          case _ =>
+            throw new MultipleMatchError(layer)
+        }
+      }
       val md = lmd.rasterMetaData
       (path("bands") & get) { 
         import DefaultJsonProtocol._
@@ -137,19 +189,6 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
     }
   }
 
-
-  // import scalaz._
-
-  // def getLayer = Memo.mutableHashMapMemo{ layer: LayerId =>
-  //   val rdd = catalog.load[SpaceTimeKey](layer).get
-  //   asRasterRDD(rdd.metaData) {
-  //     rdd.repartition(8).cache
-  //   }
-  // }
-
-
-
-  
   def timedCreate[T](startMsg:String,endMsg:String)(f:() => T):T = {
     println(startMsg)
     val s = System.currentTimeMillis
@@ -218,10 +257,23 @@ object CatalogService extends ArgApp[CatalogArgs] with SimpleRoutingApp with Spr
     }
   }
 
+  def vectorRoute = 
+    cors {
+      import DefaultJsonProtocol._
+      path("") {
+        get {
+          complete { 
+            scala.io.Source.fromFile("/Users/rob/proj/climate/climate-viewer/layer.json").getLines.mkString.parseJson.asJsObject
+          }
+        }
+      }
+    }
+
   def root = {
     pathPrefix("catalog") { catalogRoute } ~
       pathPrefix("tms") { tmsRoute } ~
       pathPrefix("stats") { zonalRoutes(catalog) } ~
+      pathPrefix("vector") { vectorRoute } ~
       pixelRoute
   }
 

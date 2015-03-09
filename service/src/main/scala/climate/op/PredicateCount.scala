@@ -1,10 +1,11 @@
 package climate.op
 
 import geotrellis.raster._
+import geotrellis.raster.histogram._
 import geotrellis.raster.op.local._
 import geotrellis.spark._
 import org.apache.spark.rdd.PairRDDFunctions
-import geotrellis.raster.stats._
+import geotrellis.raster.op.stats._
 
 import scala.reflect.ClassTag
 

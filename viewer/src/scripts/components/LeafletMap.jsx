@@ -45,7 +45,25 @@ var LeafletMap = React.createClass({
 
     baseLayers['Azavea'].addTo(this.map);    
     this.map.lc = L.control.layers(baseLayers).addTo(this.map);
-    this.map.setView([51.505, -0.09], 13);      
+    this.map.setView([51.505, -0.09], 13);
+
+    this_map = this.map;
+    var url = "http://localhost:8088/vector/";
+     $.getJSON(url, function(data){
+        // geojsonLayer = L.geoJson(data, {
+        //     style: defaultStyle,
+        //     onEachFeature: onEachFeature
+        // });
+       geojsonLayer = L.geoJson(data, {
+         style: function(feature) {
+           if(typeof feature.properties == "string") {
+             c = '#' + feature.properties;
+             return { color: c, fillColor: c, fillOpacity: 0.75, weight: 5 };
+           } else { console.log("EMPTY: ") ; return {}; }
+         }
+       });
+       geojsonLayer.addTo(this_map);
+    });
   },
 
   render: function() {      
@@ -69,7 +87,7 @@ var LeafletMap = React.createClass({
       args['breaks'] = active.entry.breaks.join(',');      
       var url = this.props.tmsUrl + "/" + active.entry.layer.name  + "/{z}/{x}/{y}?" + $.param( args );
       console.log("TMS", url);
-      var newLayer = L.tileLayer(url, {minZoom: 1, maxZoom: 12, tileSize: 256, tms: false});
+      var newLayer = L.tileLayer(url, {minZoom: 1, maxZoom: 12, tileSize: 256, tms: false, opacity: 0.95});
       newLayer.addTo(this.map);
       this.map.lc.addOverlay(newLayer, entry.layer.name);
       this.layer = newLayer;
