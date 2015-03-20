@@ -36,7 +36,7 @@ object Build extends Build {
       name := "climate-service",
       organization := "com.azavea",
       version := "0.1-SNAPSHOT",
-      scalaVersion := "2.11.5",
+      scalaVersion := "2.10.3",
       scalacOptions ++= Seq(
         "-deprecation",
         "-unchecked",
@@ -54,7 +54,6 @@ object Build extends Build {
           "io.spray"            %%   "spray-can"     % sprayV,
           "io.spray"            %%   "spray-routing" % sprayV,
           "io.spray"            %%   "spray-caching" % sprayV,
-          "io.spray"            %%   "spray-testkit" % sprayV  % "test",
           "io.spray"            %%  "spray-json"    % "1.2.6",
           "com.typesafe.akka"   %%  "akka-actor"    % akkaV,
           "com.typesafe.akka"   %%  "akka-testkit"  % akkaV   % "test",
@@ -72,10 +71,10 @@ object Build extends Build {
           "org.apache.spark" %% "spark-core" % "1.2.1" % "provided",
  
           "com.github.nscala-time" %% "nscala-time" % "0.8.0",
-          "org.scalatest" % "scalatest_2.10" % "2.1.0" % "test",
+          "org.scalatest"       %%  "scalatest"      % "2.2.0",
           "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "provided"
         )
       }
-    ) ++ Revolver.settings ++ defaultAssemblySettings
+    ) ++ Revolver.settings ++ defaultAssemblySettings ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
   )
 }
