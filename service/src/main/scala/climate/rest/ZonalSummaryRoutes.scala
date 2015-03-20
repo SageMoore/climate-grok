@@ -2,7 +2,7 @@ package climate.rest
 
 import spray.routing._
 import geotrellis.vector._
-import geotrellis.vector.json._
+import geotrellis.vector.io.json._
 import geotrellis.vector.reproject._
 import spray.json._
 import com.github.nscala_time.time.Imports._

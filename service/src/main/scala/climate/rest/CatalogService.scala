@@ -13,7 +13,7 @@ import geotrellis.spark.cmd.args._
 import geotrellis.spark.io._
 import geotrellis.spark.io.accumulo._
 import geotrellis.spark.io.hadoop._
-import geotrellis.spark.json._
+import geotrellis.spark.io.json._
 import geotrellis.spark.tiling._
 import geotrellis.spark.utils.SparkUtils
 import geotrellis.vector._
